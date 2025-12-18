@@ -1,0 +1,1707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🐄 Cattle Health Cloud Dashboard</title>
+    <style>
+        :root {
+            --primary: #4F46E5;
+            --primary-light: #818CF8;
+            --primary-dark: #3730A3;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --danger: #EF4444;
+            --info: #3B82F6;
+            --dark: #1F2937;
+            --light: #F9FAFB;
+            --gray: #6B7280;
+            --gray-light: #E5E7EB;
+            --card-bg: #FFFFFF;
+            --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --health-excellent: #10B981;
+            --health-good: #3B82F6;
+            --health-fair: #F59E0B;
+            --health-poor: #EF4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+            -webkit-text-size-adjust: 100%;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+
+        /* Header - Mobile Optimized */
+        .header {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .header-content h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .header-content p {
+            color: var(--gray);
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .status-badge {
+            background: var(--success);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 16px;
+            font-size: 11px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 4px;
+        }
+
+        .status-badge.error {
+            background: var(--danger);
+        }
+
+        .status-badge.warning {
+            background: var(--warning);
+        }
+
+        /* Stats Cards - Mobile Optimized */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        @media (min-width: 480px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 16px;
+            }
+        }
+
+        @media (min-width: 768px) {
+            .stats-grid {
+                grid-template-columns: repeat(5, 1fr);
+                gap: 16px;
+            }
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border-radius: 14px;
+            padding: 16px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card:active {
+            transform: scale(0.98);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+        }
+
+        .stat-card.temperature::before {
+            background: linear-gradient(to right, #FF6B6B, #FF8E53);
+        }
+
+        .stat-card.heart::before {
+            background: linear-gradient(to right, #4776E6, #8E54E9);
+        }
+
+        .stat-card.oxygen::before {
+            background: linear-gradient(to right, #00B4DB, #0083B0);
+        }
+
+        .stat-card.health::before {
+            background: linear-gradient(to right, #10B981, #3B82F6);
+        }
+
+        .stat-card.alerts::before {
+            background: linear-gradient(to right, #FF416C, #FF4B2B);
+        }
+
+        .stat-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .stat-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .temperature .stat-icon { background: linear-gradient(135deg, #FF6B6B, #FF8E53); }
+        .heart .stat-icon { background: linear-gradient(135deg, #4776E6, #8E54E9); }
+        .oxygen .stat-icon { background: linear-gradient(135deg, #00B4DB, #0083B0); }
+        .health .stat-icon { background: linear-gradient(135deg, #10B981, #3B82F6); }
+        .alerts .stat-icon { background: linear-gradient(135deg, #FF416C, #FF4B2B); }
+
+        .stat-title {
+            font-size: 12px;
+            color: var(--gray);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            line-height: 1.2;
+        }
+
+        @media (min-width: 480px) {
+            .stat-value {
+                font-size: 28px;
+            }
+        }
+
+        .stat-trend {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .stat-trend.up { color: var(--success); }
+        .stat-trend.down { color: var(--danger); }
+        .stat-trend.stable { color: var(--gray); }
+
+        /* Enhanced Health Score Indicator */
+        .health-indicator {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 4px;
+        }
+
+        .health-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .health-excellent { background: var(--health-excellent); }
+        .health-good { background: var(--health-good); }
+        .health-fair { background: var(--health-fair); }
+        .health-poor { background: var(--health-poor); }
+
+        /* Alerts Section - Mobile Optimized */
+        .alerts-section {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .section-header h2 {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .alert-badge {
+            background: var(--danger);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 16px;
+            font-size: 11px;
+            font-weight: 600;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        .alert-badge.warning {
+            background: var(--warning);
+        }
+
+        .alerts-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding-right: 4px;
+        }
+
+        .alert-item {
+            background: var(--light);
+            border-radius: 12px;
+            padding: 14px;
+            border-left: 4px solid var(--danger);
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            animation: slideIn 0.3s ease;
+            touch-action: manipulation;
+        }
+
+        .alert-item.critical {
+            border-left-color: var(--danger);
+            background: linear-gradient(to right, rgba(239, 68, 68, 0.05), rgba(239, 68, 68, 0.01));
+        }
+
+        .alert-item.warning {
+            border-left-color: var(--warning);
+            background: linear-gradient(to right, rgba(245, 158, 11, 0.05), rgba(245, 158, 11, 0.01));
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .alert-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: var(--danger);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .alert-item.warning .alert-icon {
+            background: var(--warning);
+        }
+
+        .alert-item.critical .alert-icon {
+            background: var(--danger);
+        }
+
+        .alert-content {
+            flex: 1;
+            min-width: 0; /* Prevents overflow */
+        }
+
+        .alert-content h4 {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: var(--dark);
+            line-height: 1.3;
+        }
+
+        .alert-content p {
+            font-size: 11px;
+            color: var(--gray);
+            line-height: 1.4;
+            margin-bottom: 6px;
+        }
+
+        .alert-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            font-size: 10px;
+        }
+
+        .alert-meta span {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        /* Latest Readings Table - Mobile Optimized */
+        .readings-section {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .table-container {
+            overflow-x: auto;
+            border-radius: 12px;
+            border: 1px solid var(--gray-light);
+            -webkit-overflow-scrolling: touch;
+            position: relative;
+            margin: 0 -4px;
+            padding: 0 4px;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 700px;
+            font-size: 13px;
+        }
+
+        @media (max-width: 480px) {
+            .data-table {
+                min-width: 600px;
+                font-size: 12px;
+            }
+        }
+
+        .data-table th {
+            background: var(--light);
+            padding: 12px 10px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--dark);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            border-bottom: 1px solid var(--gray-light);
+            white-space: nowrap;
+        }
+
+        .data-table td {
+            padding: 12px 10px;
+            border-bottom: 1px solid var(--gray-light);
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+        .data-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .data-table tr:active {
+            background: var(--light);
+        }
+
+        .cow-id {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 600;
+        }
+
+        .status-bubble {
+            padding: 3px 10px;
+            border-radius: 16px;
+            font-size: 11px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+        }
+
+        .status-normal {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .status-alert {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+
+        .status-warning {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+
+        .status-concern {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--info);
+        }
+
+        /* Controls - Mobile Optimized */
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: stretch;
+            width: 100%;
+        }
+
+        .refresh-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 14px 20px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+            touch-action: manipulation;
+            width: 100%;
+            min-height: 48px;
+        }
+
+        .refresh-btn:active {
+            background: var(--primary-dark);
+            transform: scale(0.98);
+        }
+
+        .refresh-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .refresh-btn.loading {
+            background: var(--gray);
+        }
+
+        .last-updated {
+            font-size: 11px;
+            color: var(--gray);
+            text-align: center;
+            line-height: 1.4;
+        }
+
+        /* Loading & Error States - Mobile Optimized */
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+            background: var(--card-bg);
+            border-radius: 16px;
+            margin: 16px 0;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--gray-light);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: rgba(239, 68, 68, 0.08);
+            border: 1px solid var(--danger);
+            color: var(--danger);
+            padding: 16px;
+            border-radius: 12px;
+            margin: 16px 0;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .error.hidden {
+            display: none;
+        }
+
+        /* Animations */
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        /* No Alerts State */
+        .no-alerts {
+            text-align: center;
+            padding: 40px 16px;
+            color: var(--gray);
+        }
+
+        .no-alerts i {
+            font-size: 36px;
+            margin-bottom: 12px;
+            color: var(--success);
+        }
+
+        /* Mobile Bottom Navigation */
+        .mobile-nav {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--card-bg);
+            padding: 12px 16px;
+            box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            border-top: 1px solid var(--gray-light);
+        }
+
+        @media (max-width: 767px) {
+            .mobile-nav {
+                display: flex;
+                justify-content: space-around;
+            }
+        }
+
+        .mobile-nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px 12px;
+            border-radius: 10px;
+            text-decoration: none;
+            color: var(--gray);
+            font-size: 11px;
+            transition: all 0.2s ease;
+            min-width: 64px;
+        }
+
+        .mobile-nav-item:active {
+            background: var(--light);
+            color: var(--primary);
+        }
+
+        .mobile-nav-item.active {
+            color: var(--primary);
+            background: var(--light);
+        }
+
+        .mobile-nav-item i {
+            font-size: 18px;
+            margin-bottom: 4px;
+        }
+
+        /* Swipe Indicators */
+        .swipe-hint {
+            display: none;
+            text-align: center;
+            color: var(--gray);
+            font-size: 12px;
+            padding: 8px;
+            animation: fadeInOut 2s infinite;
+        }
+
+        @media (max-width: 767px) {
+            .swipe-hint {
+                display: block;
+            }
+        }
+
+        @keyframes fadeInOut {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        /* Content Sections for Mobile Navigation */
+        .content-section {
+            display: block;
+        }
+
+        @media (max-width: 767px) {
+            .content-section {
+                display: none;
+                padding-bottom: 80px; /* Space for mobile nav */
+            }
+            
+            .content-section.active {
+                display: block;
+            }
+        }
+
+        /* Footer - Mobile Optimized */
+        .footer {
+            text-align: center;
+            padding: 16px;
+            color: var(--gray);
+            font-size: 11px;
+            margin-top: 32px;
+            background: var(--card-bg);
+            border-radius: 12px;
+            line-height: 1.4;
+        }
+
+        /* Desktop Adjustments */
+        @media (min-width: 768px) {
+            .container {
+                padding: 24px;
+            }
+            
+            .header {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+                padding: 24px;
+                margin-bottom: 24px;
+            }
+            
+            .header-content h1 {
+                font-size: 28px;
+            }
+            
+            .controls {
+                flex-direction: row;
+                align-items: center;
+                width: auto;
+            }
+            
+            .refresh-btn {
+                width: auto;
+                min-height: auto;
+            }
+            
+            .last-updated {
+                text-align: right;
+            }
+        }
+
+        /* Tablet Adjustments */
+        @media (min-width: 480px) and (max-width: 767px) {
+            .container {
+                padding: 20px;
+            }
+            
+            .header-content h1 {
+                font-size: 26px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        /* Touch Device Optimizations */
+        @media (hover: none) and (pointer: coarse) {
+            button, .stat-card, .alert-item {
+                cursor: default;
+            }
+            
+            .stat-card:hover {
+                transform: none;
+            }
+            
+            .refresh-btn:hover {
+                transform: none;
+            }
+        }
+
+        /* Safe Area Insets for Notch Phones */
+        @supports (padding: max(0px)) {
+            .container, .mobile-nav {
+                padding-left: max(16px, env(safe-area-inset-left));
+                padding-right: max(16px, env(safe-area-inset-right));
+            }
+            
+            .mobile-nav {
+                padding-bottom: max(12px, env(safe-area-inset-bottom));
+            }
+            
+            body {
+                padding-bottom: env(safe-area-inset-bottom);
+            }
+        }
+
+        /* Value coloring in table */
+        .value-critical { color: var(--danger); font-weight: 600; }
+        .value-warning { color: var(--warning); font-weight: 600; }
+        .value-normal { color: var(--success); }
+        .value-low { color: var(--info); }
+
+        /* Enhanced info section */
+        .info-grid {
+            display: grid;
+            gap: 12px;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        }
+
+        .info-card {
+            background: var(--light);
+            padding: 16px;
+            border-radius: 12px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .info-card h3 {
+            font-size: 14px;
+            margin-bottom: 8px;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .info-card p {
+            font-size: 12px;
+            color: var(--gray);
+            line-height: 1.5;
+        }
+
+        /* Health score colors */
+        .health-score-excellent { color: var(--health-excellent); }
+        .health-score-good { color: var(--health-good); }
+        .health-score-fair { color: var(--health-fair); }
+        .health-score-poor { color: var(--health-poor); }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-content">
+                <h1>
+                    <i class="fas fa-cloud"></i>
+                    Cattle Health Dashboard v2.0
+                    <span id="connectionStatus" class="status-badge">
+                        <i class="fas fa-wifi"></i> Connected
+                    </span>
+                </h1>
+                <p>Real-time monitoring with enhanced health analytics</p>
+            </div>
+            <div class="controls">
+                <div class="last-updated">
+                    Last updated: <span id="lastUpdated">--:--:--</span><br>
+                    <span id="recordCount">0 records</span> • <span id="activeCows">0 cows</span>
+                </div>
+                <button class="refresh-btn" onclick="loadData()" id="refreshBtn">
+                    <i class="fas fa-sync-alt"></i>
+                    <span>Refresh</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loading" class="loading">
+            <div class="loading-spinner"></div>
+            <h3>Loading Enhanced Dashboard</h3>
+            <p>Fetching real-time health analytics...</p>
+        </div>
+
+        <!-- Error State -->
+        <div id="error" class="error hidden">
+            <i class="fas fa-exclamation-circle"></i>
+            <span id="errorMessage">Error loading data</span>
+        </div>
+
+        <!-- Dashboard Content with Mobile Navigation -->
+        <div id="dashboard" style="display: none;">
+            <!-- Mobile Navigation -->
+            <div class="mobile-nav">
+                <a href="#" class="mobile-nav-item active" onclick="showSection('overview'); return false;">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Overview</span>
+                </a>
+                <a href="#" class="mobile-nav-item" onclick="showSection('alerts'); return false;">
+                    <i class="fas fa-bell"></i>
+                    <span>Alerts</span>
+                </a>
+                <a href="#" class="mobile-nav-item" onclick="showSection('readings'); return false;">
+                    <i class="fas fa-table"></i>
+                    <span>Readings</span>
+                </a>
+                <a href="#" class="mobile-nav-item" onclick="showSection('info'); return false;">
+                    <i class="fas fa-info-circle"></i>
+                    <span>Info</span>
+                </a>
+            </div>
+
+            <!-- Overview Section -->
+            <div class="content-section active" id="overviewSection">
+                <!-- Enhanced Stats Overview -->
+                <div class="stats-grid">
+                    <div class="stat-card temperature">
+                        <div class="stat-header">
+                            <div class="stat-icon">
+                                <i class="fas fa-thermometer-half"></i>
+                            </div>
+                            <div>
+                                <div class="stat-title">Avg Temp</div>
+                                <div class="stat-value" id="avgTemp">--.-°C</div>
+                                <div class="stat-trend" id="tempTrend">-</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card heart">
+                        <div class="stat-header">
+                            <div class="stat-icon">
+                                <i class="fas fa-heartbeat"></i>
+                            </div>
+                            <div>
+                                <div class="stat-title">Avg Heart Rate</div>
+                                <div class="stat-value" id="avgBpm">--- BPM</div>
+                                <div class="stat-trend" id="bpmTrend">-</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card oxygen">
+                        <div class="stat-header">
+                            <div class="stat-icon">
+                                <i class="fas fa-lungs"></i>
+                            </div>
+                            <div>
+                                <div class="stat-title">Avg Oxygen</div>
+                                <div class="stat-value" id="avgSpo2">--%</div>
+                                <div class="stat-trend" id="spo2Trend">-</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card health">
+                        <div class="stat-header">
+                            <div class="stat-icon">
+                                <i class="fas fa-heart-pulse"></i>
+                            </div>
+                            <div>
+                                <div class="stat-title">Health Score</div>
+                                <div class="stat-value" id="healthScore">--/100</div>
+                                <div class="stat-trend" id="healthStatus">--</div>
+                                <div class="health-indicator">
+                                    <div class="health-dot health-excellent"></div>
+                                    <div class="health-dot health-good"></div>
+                                    <div class="health-dot health-fair"></div>
+                                    <div class="health-dot health-poor"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card alerts">
+                        <div class="stat-header">
+                            <div class="stat-icon">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <div>
+                                <div class="stat-title">Active Alerts</div>
+                                <div class="stat-value" id="alertCount">0</div>
+                                <div class="stat-trend">Now</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alerts Section -->
+            <div class="content-section" id="alertsSection">
+                <div class="alerts-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-bell"></i> Recent Alerts</h2>
+                        <span class="alert-badge" id="alertBadge">0 alerts</span>
+                    </div>
+                    <div class="swipe-hint">
+                        <i class="fas fa-arrows-left-right"></i> Swipe to view all alerts
+                    </div>
+                    <div class="alerts-list" id="alertsList">
+                        <div class="no-alerts" id="noAlerts">
+                            <i class="fas fa-check-circle"></i>
+                            <h3>No Active Alerts</h3>
+                            <p>All cattle are healthy</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Readings Section -->
+            <div class="content-section" id="readingsSection">
+                <div class="readings-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-table"></i> Latest Readings</h2>
+                        <div class="last-updated">
+                            20 most recent • Enhanced Analytics
+                        </div>
+                    </div>
+                    <div class="swipe-hint">
+                        <i class="fas fa-arrows-left-right"></i> Swipe to view table
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Cow</th>
+                                    <th>Time</th>
+                                    <th>Temp</th>
+                                    <th>BPM</th>
+                                    <th>O₂</th>
+                                    <th>Health</th>
+                                    <th>Quality</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableBody">
+                                <!-- Table rows will be inserted here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Info Section -->
+            <div class="content-section" id="infoSection">
+                <div class="alerts-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-info-circle"></i> System Information</h2>
+                    </div>
+                    <div style="padding: 16px;">
+                        <div class="info-grid">
+                            <div class="info-card">
+                                <h3>
+                                    <i class="fas fa-database"></i> Database
+                                </h3>
+                                <p>
+                                    Status: <span style="color: var(--success); font-weight: 600;">Connected</span><br>
+                                    Provider: Supabase<br>
+                                    Records: <span id="dbRecords">0</span><br>
+                                    Active Cows: <span id="infoActiveCows">0</span>
+                                </p>
+                            </div>
+                            
+                            <div class="info-card">
+                                <h3>
+                                    <i class="fas fa-sync"></i> Data Flow
+                                </h3>
+                                <p>
+                                    IoT Sensors → MQTT → Bridge → Supabase → Dashboard<br>
+                                    Real-time analytics with health scoring
+                                </p>
+                            </div>
+                            
+                            <div class="info-card">
+                                <h3>
+                                    <i class="fas fa-cog"></i> Alert Thresholds
+                                </h3>
+                                <p>
+                                    🌡️ Temp: >40°C (Critical), >39°C (Warning)<br>
+                                    💓 BPM: >110 (Critical), >90 (Warning)<br>
+                                    🫁 O₂: <85% (Critical), <92% (Warning)<br>
+                                    💚 Health: <60 (Critical), <80 (Warning)
+                                </p>
+                            </div>
+
+                            <div class="info-card">
+                                <h3>
+                                    <i class="fas fa-chart-line"></i> Enhanced Features
+                                </h3>
+                                <p>
+                                    • Health Scoring (0-100)<br>
+                                    • Trend Analysis<br>
+                                    • Data Quality Monitoring<br>
+                                    • Predictive Insights<br>
+                                    • Multi-level Alerts
+                                </p>
+                            </div>
+
+                            <div class="info-card">
+                                <h3>
+                                    <i class="fas fa-heart-pulse"></i> Health Scoring
+                                </h3>
+                                <p>
+                                    <span class="health-score-excellent">90-100: Excellent</span><br>
+                                    <span class="health-score-good">80-89: Good</span><br>
+                                    <span class="health-score-fair">60-79: Fair</span><br>
+                                    <span class="health-score-poor">0-59: Poor</span>
+                                </p>
+                            </div>
+
+                            <div class="info-card">
+                                <h3>
+                                    <i class="fas fa-wifi"></i> System Status
+                                </h3>
+                                <p>
+                                    Last Update: <span id="infoLastUpdate">--:--:--</span><br>
+                                    Data Freshness: <span id="dataFreshness">-- min</span><br>
+                                    Version: 2.0 Enhanced<br>
+                                    Status: <span id="systemStatus">Loading...</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>Cattle Health Monitoring System v2.0 • Powered by Supabase Cloud</p>
+            <p>Enhanced Analytics • Real-time IoT Data • Updates every 10s</p>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const API_ENDPOINT = '/api/data';
+        const AUTO_REFRESH_INTERVAL = 10000; // 10 seconds
+
+        // State management
+        let currentData = [];
+        let currentStats = {};
+        let isRefreshing = false;
+        let autoRefreshTimer = null;
+        let currentSection = 'overview';
+
+        // DOM Elements
+        const elements = {
+            loading: document.getElementById('loading'),
+            error: document.getElementById('error'),
+            errorMessage: document.getElementById('errorMessage'),
+            dashboard: document.getElementById('dashboard'),
+            refreshBtn: document.getElementById('refreshBtn'),
+            connectionStatus: document.getElementById('connectionStatus'),
+            lastUpdated: document.getElementById('lastUpdated'),
+            recordCount: document.getElementById('recordCount'),
+            activeCows: document.getElementById('activeCows'),
+            
+            // Stats
+            avgTemp: document.getElementById('avgTemp'),
+            avgBpm: document.getElementById('avgBpm'),
+            avgSpo2: document.getElementById('avgSpo2'),
+            healthScore: document.getElementById('healthScore'),
+            healthStatus: document.getElementById('healthStatus'),
+            alertCount: document.getElementById('alertCount'),
+            tempTrend: document.getElementById('tempTrend'),
+            bpmTrend: document.getElementById('bpmTrend'),
+            spo2Trend: document.getElementById('spo2Trend'),
+            
+            // Alerts
+            alertBadge: document.getElementById('alertBadge'),
+            alertsList: document.getElementById('alertsList'),
+            noAlerts: document.getElementById('noAlerts'),
+            
+            // Table
+            tableBody: document.getElementById('tableBody'),
+            
+            // Info
+            dbRecords: document.getElementById('dbRecords'),
+            infoActiveCows: document.getElementById('infoActiveCows'),
+            infoLastUpdate: document.getElementById('infoLastUpdate'),
+            dataFreshness: document.getElementById('dataFreshness'),
+            systemStatus: document.getElementById('systemStatus')
+        };
+
+        // Mobile Navigation
+        function showSection(section) {
+            // Update active nav item
+            document.querySelectorAll('.mobile-nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+            
+            // Hide all sections
+            document.querySelectorAll('.content-section').forEach(sectionEl => {
+                sectionEl.classList.remove('active');
+            });
+            
+            // Show selected section
+            document.getElementById(section + 'Section').classList.add('active');
+            currentSection = section;
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🚀 Enhanced Dashboard initialized');
+            
+            // Check if mobile
+            const isMobile = window.innerWidth <= 767;
+            
+            // Initialize mobile navigation if on mobile
+            if (isMobile) {
+                // Show first section on mobile
+                showSection('overview');
+            } else {
+                // Show all sections on desktop
+                document.querySelectorAll('.content-section').forEach(section => {
+                    section.classList.add('active');
+                });
+            }
+            
+            loadData();
+            setupAutoRefresh();
+            
+            // Handle orientation changes
+            window.addEventListener('orientationchange', () => {
+                setTimeout(() => {
+                    updateTableForMobile();
+                }, 300);
+            });
+        });
+
+        // Load data from API
+        async function loadData() {
+            if (isRefreshing) return;
+            
+            try {
+                setRefreshingState(true);
+                hideError();
+                updateConnectionStatus('connecting');
+
+                console.log('📡 Fetching enhanced data from API...');
+                const response = await fetch(API_ENDPOINT + '?limit=20');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const result = await response.json();
+                console.log('✅ Enhanced API Response received');
+
+                if (result?.success) {
+                    currentData = result.data || [];
+                    currentStats = result.statistics || {};
+                    
+                    updateConnectionStatus('connected');
+                    displayEnhancedData(currentData, currentStats);
+                    updateLastUpdated();
+                } else {
+                    throw new Error(result?.error || 'Invalid API response');
+                }
+            } catch (error) {
+                console.error('❌ Load data error:', error);
+                showError(`Failed to load data: ${error.message}`);
+                updateConnectionStatus('error');
+            } finally {
+                setRefreshingState(false);
+            }
+        }
+
+        // Display enhanced data in UI
+        function displayEnhancedData(data, stats) {
+            console.log('📊 Displaying enhanced data...');
+            
+            // Hide loading, show dashboard
+            elements.loading.style.display = 'none';
+            elements.dashboard.style.display = 'block';
+            
+            // Update record count
+            const totalRecords = stats.total_records || data.length;
+            const activeCows = stats.active_cows || 1;
+            
+            elements.recordCount.textContent = `${totalRecords} records`;
+            elements.dbRecords.textContent = `${totalRecords} records`;
+            elements.activeCows.textContent = `${activeCows} cows`;
+            elements.infoActiveCows.textContent = `${activeCows} cows`;
+            
+            // Update system status
+            elements.systemStatus.textContent = stats.system_status === 'operational' ? 'Operational ✅' : 'No Data ⚠️';
+            
+            // Update statistics
+            updateEnhancedStatistics(stats);
+            
+            // Update alerts
+            updateEnhancedAlerts(stats);
+            
+            // Update table
+            updateEnhancedDataTable(data);
+        }
+
+        // Update enhanced statistics cards
+        function updateEnhancedStatistics(stats) {
+            // Temperature
+            const avgTemp = parseFloat(stats.avg_temperature || 0);
+            elements.avgTemp.textContent = avgTemp > 0 ? `${avgTemp.toFixed(1)}°C` : '--.-°C';
+            
+            // Get temperature trend
+            const cowAnalysis = stats.cow_analysis || {};
+            const firstCowId = Object.keys(cowAnalysis)[0];
+            if (firstCowId && cowAnalysis[firstCowId]?.trends?.temperature) {
+                const tempTrend = cowAnalysis[firstCowId].trends.temperature;
+                elements.tempTrend.innerHTML = `${tempTrend.icon} ${tempTrend.description}`;
+                elements.tempTrend.className = `stat-trend ${tempTrend.class}`;
+            } else {
+                elements.tempTrend.innerHTML = '→ Stable';
+                elements.tempTrend.className = 'stat-trend stable';
+            }
+            
+            // Heart Rate
+            const avgBpm = parseFloat(stats.avg_bpm || 0);
+            elements.avgBpm.textContent = avgBpm > 0 ? `${avgBpm.toFixed(0)} BPM` : '--- BPM';
+            
+            // Get heart rate trend
+            if (firstCowId && cowAnalysis[firstCowId]?.trends?.heart_rate) {
+                const bpmTrend = cowAnalysis[firstCowId].trends.heart_rate;
+                elements.bpmTrend.innerHTML = `${bpmTrend.icon} ${bpmTrend.description}`;
+                elements.bpmTrend.className = `stat-trend ${bpmTrend.class}`;
+            } else {
+                elements.bpmTrend.innerHTML = '→ Stable';
+                elements.bpmTrend.className = 'stat-trend stable';
+            }
+            
+            // Oxygen
+            const avgSpo2 = parseFloat(stats.avg_spo2 || 0);
+            elements.avgSpo2.textContent = avgSpo2 > 0 ? `${avgSpo2.toFixed(0)}%` : '--%';
+            elements.spo2Trend.innerHTML = '→ Stable';
+            elements.spo2Trend.className = 'stat-trend stable';
+            
+            // Health Score
+            const avgHealthScore = parseFloat(stats.avg_health_score || 0);
+            elements.healthScore.textContent = avgHealthScore > 0 ? `${Math.round(avgHealthScore)}/100` : '--/100';
+            
+            // Set health status and color
+            let healthStatusText = '--';
+            let healthStatusClass = 'stable';
+            
+            if (avgHealthScore >= 90) {
+                healthStatusText = 'Excellent';
+                healthStatusClass = 'up';
+                elements.healthScore.className = 'stat-value health-score-excellent';
+            } else if (avgHealthScore >= 80) {
+                healthStatusText = 'Good';
+                healthStatusClass = 'up';
+                elements.healthScore.className = 'stat-value health-score-good';
+            } else if (avgHealthScore >= 70) {
+                healthStatusText = 'Fair';
+                healthStatusClass = 'stable';
+                elements.healthScore.className = 'stat-value health-score-fair';
+            } else if (avgHealthScore >= 60) {
+                healthStatusText = 'Concern';
+                healthStatusClass = 'down';
+                elements.healthScore.className = 'stat-value health-score-fair';
+            } else if (avgHealthScore > 0) {
+                healthStatusText = 'Poor';
+                healthStatusClass = 'down';
+                elements.healthScore.className = 'stat-value health-score-poor';
+            }
+            
+            elements.healthStatus.textContent = healthStatusText;
+            elements.healthStatus.className = `stat-trend ${healthStatusClass}`;
+            
+            // Get health trend
+            if (firstCowId && cowAnalysis[firstCowId]?.trends?.health_score) {
+                const healthTrend = cowAnalysis[firstCowId].trends.health_score;
+                if (healthTrend.value !== 0) {
+                    elements.healthStatus.innerHTML = `${healthTrend.icon} ${healthStatusText}`;
+                }
+            }
+            
+            // Alerts count
+            const alertCount = parseInt(stats.alerts_count || 0);
+            const criticalAlerts = parseInt(stats.critical_alerts_count || 0);
+            elements.alertCount.textContent = alertCount;
+            
+            // Update alert badge
+            const alertBadge = elements.alertBadge;
+            if (alertCount > 0) {
+                if (criticalAlerts > 0) {
+                    alertBadge.className = 'alert-badge';
+                    alertBadge.textContent = `${alertCount} alerts (${criticalAlerts} critical)`;
+                } else {
+                    alertBadge.className = 'alert-badge warning';
+                    alertBadge.textContent = `${alertCount} alerts`;
+                }
+            } else {
+                alertBadge.className = 'alert-badge';
+                alertBadge.textContent = '0 alerts';
+            }
+            
+            // Update data freshness
+            if (stats.latest_timestamp && stats.latest_timestamp !== 'No data') {
+                try {
+                    const lastUpdate = new Date(stats.latest_timestamp);
+                    const now = new Date();
+                    const minutesAgo = Math.floor((now - lastUpdate) / 60000);
+                    elements.dataFreshness.textContent = `${minutesAgo} min`;
+                    
+                    if (minutesAgo > 5) {
+                        elements.dataFreshness.style.color = 'var(--warning)';
+                    } else {
+                        elements.dataFreshness.style.color = 'var(--success)';
+                    }
+                } catch (e) {
+                    elements.dataFreshness.textContent = '-- min';
+                }
+            }
+        }
+
+        // Update enhanced alerts section
+        function updateEnhancedAlerts(stats) {
+            const alerts = Array.isArray(stats.alerts_list) ? stats.alerts_list : [];
+            const alertCount = alerts.length;
+            
+            // Update badge
+            elements.alertBadge.textContent = `${alertCount} alert${alertCount !== 1 ? 's' : ''}`;
+            
+            // Show/hide no alerts message
+            if (alertCount > 0) {
+                elements.noAlerts.style.display = 'none';
+                
+                // Sort alerts: critical first, then warning
+                const sortedAlerts = [...alerts].sort((a, b) => {
+                    if (a.severity === 'critical' && b.severity !== 'critical') return -1;
+                    if (a.severity !== 'critical' && b.severity === 'critical') return 1;
+                    return 0;
+                });
+                
+                // Display first 10 alerts
+                const alertsToShow = sortedAlerts.slice(0, 10);
+                let alertsHTML = '';
+                
+                alertsToShow.forEach(alert => {
+                    if (!alert || typeof alert !== 'object') {
+                        console.warn('Invalid alert object:', alert);
+                        return;
+                    }
+                    
+                    const cowId = alert.cow_id || 'Unknown';
+                    const type = alert.type || 'unknown';
+                    const value = alert.value || 0;
+                    const severity = alert.severity || 'warning';
+                    const description = alert.description || '';
+                    
+                    // Determine alert details
+                    let alertTitle = '';
+                    let alertIcon = 'exclamation-triangle';
+                    let unit = '';
+                    
+                    switch(type.toLowerCase()) {
+                        case 'temperature':
+                            alertTitle = 'High Temperature';
+                            alertIcon = 'thermometer-full';
+                            unit = '°C';
+                            break;
+                        case 'bpm':
+                            alertTitle = 'High Heart Rate';
+                            alertIcon = 'heartbeat';
+                            unit = ' BPM';
+                            break;
+                        case 'spo2':
+                            alertTitle = 'Low Oxygen';
+                            alertIcon = 'lungs';
+                            unit = '%';
+                            break;
+                        case 'health_status':
+                            alertTitle = 'Health Status';
+                            alertIcon = 'heart-pulse';
+                            break;
+                        case 'data_quality':
+                            alertTitle = 'Data Quality';
+                            alertIcon = 'chart-line';
+                            unit = '/100';
+                            break;
+                        default:
+                            alertTitle = 'Health Alert';
+                            alertIcon = 'exclamation-triangle';
+                    }
+                    
+                    const severityClass = severity === 'critical' ? 'critical' : 'warning';
+                    const severityText = severity === 'critical' ? 'CRITICAL' : 'WARNING';
+                    const displayValue = typeof value === 'number' ? value.toFixed(type === 'temperature' ? 1 : 0) : value;
+                    
+                    alertsHTML += `
+                        <div class="alert-item ${severityClass}">
+                            <div class="alert-icon">
+                                <i class="fas fa-${alertIcon}"></i>
+                            </div>
+                            <div class="alert-content">
+                                <h4>${description || alertTitle}</h4>
+                                <p>Cow ${cowId} • ${displayValue}${unit}</p>
+                                <div class="alert-meta">
+                                    <span>Cow ${cowId}</span>
+                                    <span>${severityText}</span>
+                                    <span>${type.replace('_', ' ').toUpperCase()}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                if (alertsHTML) {
+                    elements.alertsList.innerHTML = alertsHTML;
+                } else {
+                    elements.noAlerts.style.display = 'block';
+                    elements.alertsList.innerHTML = '';
+                }
+            } else {
+                elements.noAlerts.style.display = 'block';
+                elements.alertsList.innerHTML = '';
+            }
+        }
+
+        // Update enhanced data table
+        function updateEnhancedDataTable(data) {
+            if (!data || !Array.isArray(data) || data.length === 0) {
+                elements.tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 40px; color: #6B7280;">
+                            <i class="fas fa-database" style="font-size: 24px; margin-bottom: 12px;"></i>
+                            <h3>No Enhanced Data Available</h3>
+                            <p>Waiting for sensor data...</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            let tableHTML = '';
+            data.forEach(item => {
+                const cowId = item.cow_id || 'Unknown';
+                const temp = parseFloat(item.temperature || 0);
+                const bpm = parseInt(item.bpm || 0);
+                const spo2 = parseInt(item.spo2 || 0);
+                const healthScore = parseInt(item.health_score || 100);
+                const healthStatus = item.health_status || 'NORMAL';
+                const dataQuality = parseInt(item.data_quality || 100);
+                const timestamp = item.created_at || new Date().toISOString();
+                
+                // Determine overall status
+                let status = 'normal';
+                let statusText = 'Normal';
+                let statusIcon = 'check-circle';
+                
+                if (healthStatus === 'CRITICAL' || temp > 40.0 || bpm > 110 || spo2 < 85) {
+                    status = 'alert';
+                    statusText = 'Critical';
+                    statusIcon = 'exclamation-triangle';
+                } else if (healthStatus === 'WARNING' || temp > 39.0 || bpm > 90 || spo2 < 92 || healthScore < 70) {
+                    status = 'warning';
+                    statusText = 'Warning';
+                    statusIcon = 'exclamation-circle';
+                } else if (healthScore < 80) {
+                    status = 'concern';
+                    statusText = 'Concern';
+                    statusIcon = 'heart-circle-exclamation';
+                }
+                
+                // Format timestamp
+                const time = formatTimeForMobile(timestamp);
+                
+                // Determine CSS classes for values
+                const tempClass = temp > 40.0 ? 'value-critical' : temp > 39.0 ? 'value-warning' : 'value-normal';
+                const bpmClass = bpm > 110 ? 'value-critical' : bpm > 90 ? 'value-warning' : 'value-normal';
+                const spo2Class = spo2 < 85 ? 'value-critical' : spo2 < 92 ? 'value-warning' : 'value-normal';
+                
+                let healthClass = 'value-normal';
+                if (healthScore < 60) healthClass = 'value-critical';
+                else if (healthScore < 70) healthClass = 'value-warning';
+                else if (healthScore < 80) healthClass = 'value-low';
+                
+                let qualityClass = 'value-normal';
+                if (dataQuality < 60) qualityClass = 'value-warning';
+                else if (dataQuality < 80) qualityClass = 'value-low';
+                
+                tableHTML += `
+                    <tr>
+                        <td>
+                            <div class="cow-id">
+                                <i class="fas fa-cow"></i>
+                                ${cowId}
+                            </div>
+                        </td>
+                        <td>${time}</td>
+                        <td class="${tempClass}">${temp > 0 ? temp.toFixed(1) : '--.'}°C</td>
+                        <td class="${bpmClass}">${bpm > 0 ? bpm : '--'}</td>
+                        <td class="${spo2Class}">${spo2 > 0 ? spo2 : '--'}%</td>
+                        <td class="${healthClass}">${healthScore > 0 ? healthScore : '--'}</td>
+                        <td class="${qualityClass}">${dataQuality > 0 ? dataQuality : '--'}</td>
+                        <td>
+                            <span class="status-bubble status-${status}">
+                                <i class="fas fa-${statusIcon}"></i>
+                                ${statusText}
+                            </span>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            elements.tableBody.innerHTML = tableHTML;
+        }
+
+        // Helper functions
+        function formatTimeForMobile(timestamp) {
+            try {
+                const date = new Date(timestamp);
+                if (isNaN(date.getTime())) return '--:--';
+                
+                if (window.innerWidth <= 480) {
+                    return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+                } else if (window.innerWidth <= 768) {
+                    return date.toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                } else {
+                    return date.toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit'
+                    });
+                }
+            } catch (e) {
+                return '--:--';
+            }
+        }
+
+        function updateLastUpdated() {
+            const now = new Date();
+            const isMobile = window.innerWidth <= 768;
+            
+            if (isMobile) {
+                elements.lastUpdated.textContent = now.toLocaleTimeString([], {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            } else {
+                elements.lastUpdated.textContent = now.toLocaleTimeString([], {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                });
+            }
+            
+            elements.infoLastUpdate.textContent = now.toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+        }
+
+        function updateConnectionStatus(status) {
+            const badge = elements.connectionStatus;
+            badge.innerHTML = '';
+            
+            switch(status) {
+                case 'connected':
+                    badge.innerHTML = '<i class="fas fa-wifi"></i> Connected';
+                    badge.className = 'status-badge';
+                    break;
+                case 'connecting':
+                    badge.innerHTML = '<i class="fas fa-sync fa-spin"></i> Connecting';
+                    badge.className = 'status-badge warning';
+                    break;
+                case 'error':
+                    badge.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Error';
+                    badge.className = 'status-badge error';
+                    break;
+            }
+        }
+
+        function setRefreshingState(refreshing) {
+            isRefreshing = refreshing;
+            const btn = elements.refreshBtn;
+            const icon = btn.querySelector('i');
+            
+            if (refreshing) {
+                btn.disabled = true;
+                btn.classList.add('loading');
+                icon.className = 'fas fa-spinner fa-spin';
+            } else {
+                btn.disabled = false;
+                btn.classList.remove('loading');
+                icon.className = 'fas fa-sync-alt';
+            }
+        }
+
+        function showError(message) {
+            elements.errorMessage.textContent = message;
+            elements.error.classList.remove('hidden');
+            elements.loading.style.display = 'none';
+            elements.dashboard.style.display = 'none';
+        }
+
+        function hideError() {
+            elements.error.classList.add('hidden');
+        }
+
+        // Auto-refresh
+        function setupAutoRefresh() {
+            if (autoRefreshTimer) {
+                clearInterval(autoRefreshTimer);
+            }
+            autoRefreshTimer = setInterval(loadData, AUTO_REFRESH_INTERVAL);
+        }
+
+        // Handle page visibility
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                if (autoRefreshTimer) {
+                    clearInterval(autoRefreshTimer);
+                    autoRefreshTimer = null;
+                }
+            } else {
+                setupAutoRefresh();
+                loadData(); // Refresh when user comes back
+            }
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            updateLastUpdated();
+            if (currentData.length > 0) {
+                updateEnhancedDataTable(currentData);
+            }
+        });
+
+        // Export for global access
+        window.loadData = loadData;
+        window.showSection = showSection;
+    </script>
+</body>
+</html>
